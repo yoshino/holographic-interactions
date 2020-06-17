@@ -17,6 +17,7 @@ import Light from "@/modules/light.ts";
 import GeometryGrid from "@/modules/geometryGrid.ts";
 import Utils from "@/modules/utils.ts";
 import Renderer from "@/modules/renderer.ts";
+import Camera from "@/modules/camera.ts";
 
 const distance = (x1: number, y1: number, x2: number, y2: number) => {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -45,11 +46,7 @@ export default class HolographicInteractions extends Vue {
 
   scene = new THREE.Scene();
   renderer = Renderer.create();
-  camera = new THREE.PerspectiveCamera(
-    45,
-    window.innerWidth / window.innerHeight,
-    1
-  );
+  camera = Camera.create();
   controls = new OrbitControls(this.camera, this.renderer.domElement);
   floor = new THREE.Mesh(
     new THREE.PlaneGeometry(2000, 2000),
@@ -67,7 +64,6 @@ export default class HolographicInteractions extends Vue {
 
   mounted() {
     this.setup();
-    this.setupCamera();
     this.light.setup();
     this.geometryGrid.setup();
     this.addFloor();
@@ -103,10 +99,6 @@ export default class HolographicInteractions extends Vue {
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.width, this.height);
-  }
-
-  setupCamera() {
-    this.camera.position.set(0, 30, 0);
   }
 
   addFloor() {
