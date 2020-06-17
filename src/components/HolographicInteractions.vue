@@ -16,6 +16,7 @@ import { TweenMax, Expo } from "gsap";
 import Light from "@/modules/light.ts";
 import GeometryGrid from "@/modules/geometryGrid.ts";
 import Utils from "@/modules/utils.ts";
+import Renderer from "@/modules/renderer.ts";
 
 const distance = (x1: number, y1: number, x2: number, y2: number) => {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -43,7 +44,7 @@ export default class HolographicInteractions extends Vue {
   repulsion = 1;
 
   scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer = Renderer.create();
   camera = new THREE.PerspectiveCamera(
     45,
     window.innerWidth / window.innerHeight,
@@ -66,7 +67,6 @@ export default class HolographicInteractions extends Vue {
 
   mounted() {
     this.setup();
-    this.setupScene();
     this.setupCamera();
     this.light.setup();
     this.geometryGrid.setup();
@@ -103,15 +103,6 @@ export default class HolographicInteractions extends Vue {
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.width, this.height);
-  }
-
-  setupScene() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    document.body.appendChild(this.renderer.domElement);
   }
 
   setupCamera() {
