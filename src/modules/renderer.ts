@@ -8,6 +8,6 @@ export default class Renderrer {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    return renderer
+    return renderer;
   }
 }
