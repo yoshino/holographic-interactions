@@ -3,6 +3,7 @@ import * as dat from "dat.gui";
 
 import { Position } from "@/types/position";
 import { HexColor } from "@/types/hexColor";
+import Utils from "@/modules/utils.ts";
 
 export default class Light {
   scene: THREE.Scene;
@@ -69,7 +70,7 @@ export default class Light {
     const gui = this.gui.addFolder("Ambient Light");
 
     gui.addColor(hexColor, "color").onChange(color => {
-      const threeColor = this.hexToTreeRGBColor(color);
+      const threeColor = Utils.hexToTreeRGBColor(color);
       if (threeColor) {
         light.color = threeColor;
       }
@@ -80,7 +81,7 @@ export default class Light {
     const gui = this.gui.addFolder("Spot Light");
 
     gui.addColor(hexColor, "color").onChange(color => {
-      const threeColor = this.hexToTreeRGBColor(color);
+      const threeColor = Utils.hexToTreeRGBColor(color);
       if (threeColor) {
         light.color = threeColor;
       }
@@ -91,25 +92,10 @@ export default class Light {
     const gui = this.gui.addFolder("Rect Light");
 
     gui.addColor(hexColor, "color").onChange(color => {
-      const threeColor = this.hexToTreeRGBColor(color);
+      const threeColor = Utils.hexToTreeRGBColor(color);
       if (threeColor) {
         light.color = threeColor;
       }
     });
-  }
-
-  hexToTreeRGBColor(hex: string) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-
-    if (result) {
-      const r = parseInt(result[1], 16);
-      const g = parseInt(result[2], 16);
-      const b = parseInt(result[3], 16);
-
-      console.log(r, g, b);
-
-      return new THREE.Color(`rgb(${r}, ${g}, ${b})`);
-    }
-    return null;
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import * as dat from "dat.gui";
 import RotationGeometry from "./rotationGeometry";
+import Utils from "@/modules/utils.ts";
 
 export default class GeometryGrid {
   scene: THREE.Scene;
@@ -34,7 +35,7 @@ export default class GeometryGrid {
       new RotationGeometry(new THREE.BoxBufferGeometry(0.5, 0.5, 0.5), 0, 0, 0),
       new RotationGeometry(
         new THREE.TorusBufferGeometry(0.3, 0.12, 30, 200),
-        this.radians(90),
+        Utils.radians(90),
         0,
         0
       ),
@@ -42,12 +43,12 @@ export default class GeometryGrid {
         new THREE.ConeBufferGeometry(0.3, 0.5, 32),
         0,
         0,
-        this.radians(-180)
+        Utils.radians(-180)
       )
     ];
   }
 
-  setup(control=true) {
+  setup(control = true) {
     const meshParams = {
       color: "#ff00ff",
       metalness: 0.58,
@@ -93,7 +94,9 @@ export default class GeometryGrid {
 
     this.scene.add(this.groupMesh);
 
-    if(control) { this.setupMeshControl(material) }
+    if (control) {
+      this.setupMeshControl(material);
+    }
   }
 
   getRandomGeometry() {
@@ -123,7 +126,7 @@ export default class GeometryGrid {
     };
 
     this.gui.addColor(meshParams, "color").onChange(color => {
-      const rgb = this.hexToTreeRGBColor(color);
+      const rgb = Utils.hexToTreeRGBColor(color);
       if (rgb) {
         material.color = rgb;
       }
@@ -134,24 +137,5 @@ export default class GeometryGrid {
     this.gui.add(meshParams, "roughness", 0.1, 1).onChange(val => {
       material.roughness = val;
     });
-  }
-
-  hexToTreeRGBColor(hex: string) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-
-    if (result) {
-      const r = parseInt(result[1], 16);
-      const g = parseInt(result[2], 16);
-      const b = parseInt(result[3], 16);
-
-      console.log(r, g, b);
-
-      return new THREE.Color(`rgb(${r}, ${g}, ${b})`);
-    }
-    return null;
-  }
-
-  radians(degrees: number) {
-    return (degrees * Math.PI) / 180;
   }
 }

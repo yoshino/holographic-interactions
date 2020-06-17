@@ -15,10 +15,7 @@ import * as dat from "dat.gui";
 import { TweenMax, Expo } from "gsap";
 import Light from "@/modules/light.ts";
 import GeometryGrid from "@/modules/geometryGrid.ts";
-
-const radians = (degrees: number) => {
-  return (degrees * Math.PI) / 180;
-};
+import Utils from "@/modules/utils.ts";
 
 const distance = (x1: number, y1: number, x2: number, y2: number) => {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
@@ -167,21 +164,21 @@ export default class HolographicInteractions extends Vue {
               mesh.position.y,
               -1,
               1,
-              radians(45),
+              Utils.radians(45),
               this.geometryGrid.initialRotation.x
             ),
             z: map(
               mesh.position.y,
               -1,
               1,
-              radians(-90),
+              Utils.radians(-90),
               this.geometryGrid.initialRotation.z
             ),
             y: map(
               mesh.position.y,
               -1,
               1,
-              radians(90),
+              Utils.radians(90),
               this.geometryGrid.initialRotation.y
             )
           });
