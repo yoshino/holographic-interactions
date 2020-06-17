@@ -10,10 +10,10 @@
 
 import { Component, Vue } from "vue-property-decorator";
 import * as THREE from "three";
-import Stats from "three/examples/jsm/libs/stats.module";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as dat from "dat.gui";
 import { TweenMax, Expo } from "gsap";
+import Light from "@/modules/light.ts";
 
 const radians = (degrees: number) => {
   return (degrees * Math.PI) / 180;
@@ -65,15 +65,8 @@ class BackgroundGeometry {
   }
 }
 
-interface Position {
-  x: number;
-  y: number;
-  z: number;
-}
-
 @Component
 export default class HolographicInteractions extends Vue {
-  stats = Stats();
   gui = new dat.GUI();
 
   raycaster = new THREE.Raycaster();
@@ -122,19 +115,16 @@ export default class HolographicInteractions extends Vue {
     z: 0
   };
 
+  light = new Light(this.scene, this.gui);
+
   mounted() {
     this.setup();
     this.setupScene();
     this.setupCamera();
-    this.addAmbientLight();
-    this.addSpotLight();
-    this.addRectLight();
+    this.light.setup();
     this.createGrid();
     this.addFloor();
     this.animate();
-    this.addPointLight(0xfff000, { x: 0, y: 10, z: -100 });
-    this.addPointLight(0xfff000, { x: 100, y: 10, z: 0 });
-    this.addPointLight(0x00ff00, { x: 20, y: 5, z: 20 });
   }
 
   setup() {
@@ -146,9 +136,11 @@ export default class HolographicInteractions extends Vue {
     window.addEventListener("resize", this.onResize.bind(this), {
       passive: true
     });
+
     window.addEventListener("mousemove", this.onMouseMove.bind(this), {
       passive: true
     });
+
     this.onMouseMove({ clientX: 0, clientY: 0 });
   }
 
@@ -177,67 +169,6 @@ export default class HolographicInteractions extends Vue {
 
   setupCamera() {
     this.camera.position.set(0, 30, 0);
-  }
-
-  addAmbientLight() {
-    const obj = { color: "#2900af" };
-    const light = new THREE.AmbientLight(obj.color, 1);
-
-    this.scene.add(light);
-
-    const gui = this.gui.addFolder("Ambient Light");
-
-    gui.addColor(obj, "color").onChange(color => {
-      const rgb = hexToRgbTreeJs(color);
-      if (rgb) {
-        light.color = rgb;
-      }
-    });
-  }
-
-  addSpotLight() {
-    const obj = { color: "#e000ff" };
-    const light = new THREE.SpotLight(obj.color, 1, 1000);
-
-    light.position.set(0, 27, 0);
-    light.castShadow = true;
-
-    this.scene.add(light);
-
-    const gui = this.gui.addFolder("Spot Light");
-
-    gui.addColor(obj, "color").onChange(color => {
-      const rgb = hexToRgbTreeJs(color);
-      if (rgb) {
-        light.color = rgb;
-      }
-    });
-  }
-
-  addRectLight() {
-    const obj = { color: "#0077ff" };
-    const rectLight = new THREE.RectAreaLight(obj.color, 1, 2000, 2000);
-
-    rectLight.position.set(5, 50, 50);
-    rectLight.lookAt(0, 0, 0);
-
-    this.scene.add(rectLight);
-
-    const gui = this.gui.addFolder("Rect Light");
-
-    gui.addColor(obj, "color").onChange(color => {
-      const rgb = hexToRgbTreeJs(color);
-      if (rgb) {
-        rectLight.color = rgb;
-      }
-    });
-  }
-
-  addPointLight(color: number, position: Position) {
-    const pointLight = new THREE.PointLight(color, 1, 1000, 1);
-    pointLight.position.set(position.x, position.y, position.z);
-
-    this.scene.add(pointLight);
   }
 
   getRandomGeometry() {
@@ -317,19 +248,6 @@ export default class HolographicInteractions extends Vue {
     this.groupMesh.position.set(-centerX, 0, -centerZ);
 
     this.scene.add(this.groupMesh);
-  }
-
-  initStats() {
-    this.stats.setMode(0); // 0: fps, 1: ms
-
-    // Align top-left
-    this.stats.domElement.style.position = "absolute";
-    this.stats.domElement.style.left = "0px";
-    this.stats.domElement.style.top = "0px";
-
-    const statsOutput = document.getElementById("stats-output");
-    if (statsOutput === null) return;
-    statsOutput.appendChild(this.stats.domElement);
   }
 
   addFloor() {
