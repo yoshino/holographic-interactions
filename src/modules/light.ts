@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import * as dat from "dat.gui";
 
-import { Position } from "@/types/position"
-import { HexColor } from "@/types/hexColor"
+import { Position } from "@/types/position";
+import { HexColor } from "@/types/hexColor";
 
 export default class Light {
   scene: THREE.Scene;
@@ -45,7 +45,7 @@ export default class Light {
     }
   }
 
-  addRectLight(control=true) {
+  addRectLight(control = true) {
     const obj = { color: "#0077ff" };
     const rectLight = new THREE.RectAreaLight(obj.color, 1, 2000, 2000);
 

@@ -14,6 +14,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as dat from "dat.gui";
 import { TweenMax, Expo } from "gsap";
 import Light from "@/modules/light.ts";
+import GeometryGrid from "@/modules/geometryGrid.ts";
 
 const radians = (degrees: number) => {
   return (degrees * Math.PI) / 180;
@@ -33,67 +34,16 @@ const map = (
   return ((value - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
 };
 
-const hexToRgbTreeJs = (hex: string) => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-
-  if (result) {
-    const r = parseInt(result[1], 16) / 255;
-    const g = parseInt(result[2], 16) / 255;
-    const b = parseInt(result[3], 16) / 255;
-
-    return new THREE.Color(`rgb(${r}, ${g}, ${b})`);
-  }
-  return null;
-};
-
-class BackgroundGeometry {
-  geom: THREE.BufferGeometry;
-  rotationX: number;
-  rotationY: number;
-  rotationZ: number;
-
-  constructor(
-    geom: THREE.BufferGeometry,
-    rotationX: number,
-    rotationY: number,
-    rotationZ: number
-  ) {
-    this.geom = geom;
-    this.rotationX = rotationX;
-    this.rotationY = rotationY;
-    this.rotationZ = rotationZ;
-  }
-}
-
 @Component
 export default class HolographicInteractions extends Vue {
   gui = new dat.GUI();
 
   raycaster = new THREE.Raycaster();
   backgroundColor = "#1b1b1b";
-  gutter = { size: 1.2 };
-  meshes: THREE.Mesh[][] = [];
-  grid = { cols: 15, rows: 7 };
   width = window.innerWidth;
   height = window.innerHeight;
   mouse3D = new THREE.Vector2();
   repulsion = 1;
-
-  geometries = [
-    new BackgroundGeometry(new THREE.BoxBufferGeometry(0.5, 0.5, 0.5), 0, 0, 0),
-    new BackgroundGeometry(
-      new THREE.TorusBufferGeometry(0.3, 0.12, 30, 200),
-      radians(90),
-      0,
-      0
-    ),
-    new BackgroundGeometry(
-      new THREE.ConeBufferGeometry(0.3, 0.5, 32),
-      0,
-      0,
-      radians(-180)
-    )
-  ];
 
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -103,26 +53,26 @@ export default class HolographicInteractions extends Vue {
     1
   );
   controls = new OrbitControls(this.camera, this.renderer.domElement);
-  groupMesh = new THREE.Object3D();
   floor = new THREE.Mesh(
     new THREE.PlaneGeometry(2000, 2000),
     new THREE.ShadowMaterial({ opacity: 0.3 })
   );
 
-  initialRotation = {
-    x: 0,
-    y: 0,
-    z: 0
-  };
-
   light = new Light(this.scene, this.gui);
+
+  geometryGrid = new GeometryGrid({
+    scene: this.scene,
+    gui: this.gui,
+    grid: { cols: 15, rows: 7 },
+    gutter: { size: 1.2 }
+  });
 
   mounted() {
     this.setup();
     this.setupScene();
     this.setupCamera();
     this.light.setup();
-    this.createGrid();
+    this.geometryGrid.setup();
     this.addFloor();
     this.animate();
   }
@@ -171,85 +121,6 @@ export default class HolographicInteractions extends Vue {
     this.camera.position.set(0, 30, 0);
   }
 
-  getRandomGeometry() {
-    return this.geometries[
-      Math.floor(Math.random() * Math.floor(this.geometries.length))
-    ];
-  }
-
-  getMesh(
-    geometry: THREE.BufferGeometry,
-    material: THREE.MeshPhysicalMaterial
-  ) {
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    return mesh;
-  }
-
-  createGrid() {
-    const meshParams = {
-      color: "#ff00ff",
-      metalness: 0.58,
-      emissive: "#000000",
-      roughness: 0.18
-    };
-
-    const material = new THREE.MeshPhysicalMaterial(meshParams);
-    const gui = this.gui.addFolder("Mesh Material");
-
-    gui.addColor(meshParams, "color").onChange(color => {
-      const rgb = hexToRgbTreeJs(color);
-      if (rgb) {
-        material.color = rgb;
-      }
-    });
-    gui.add(meshParams, "metalness", 0.1, 1).onChange(val => {
-      material.metalness = val;
-    });
-    gui.add(meshParams, "roughness", 0.1, 1).onChange(val => {
-      material.roughness = val;
-    });
-
-    for (let row = 0; row < this.grid.rows; row++) {
-      this.meshes[row] = [];
-
-      for (let col = 0; col < this.grid.cols; col++) {
-        const geometry = this.getRandomGeometry();
-        const mesh = this.getMesh(geometry.geom, material);
-
-        mesh.position.set(
-          col + col * this.gutter.size,
-          0,
-          row + row * this.gutter.size
-        );
-        mesh.rotation.x = geometry.rotationX;
-        mesh.rotation.y = geometry.rotationY;
-        mesh.rotation.z = geometry.rotationZ;
-
-        this.initialRotation = {
-          x: mesh.rotation.x,
-          y: mesh.rotation.y,
-          z: mesh.rotation.z
-        };
-
-        this.groupMesh.add(mesh);
-        this.meshes[row][col] = mesh;
-      }
-    }
-
-    const centerX =
-      (this.grid.cols - 1 + (this.grid.cols - 1) * this.gutter.size) * 0.5;
-    const centerZ =
-      (this.grid.rows - 1 + (this.grid.rows - 1) * this.gutter.size) * 0.5;
-
-    this.groupMesh.position.set(-centerX, 0, -centerZ);
-
-    this.scene.add(this.groupMesh);
-  }
-
   addFloor() {
     this.floor.position.y = 0;
     this.floor.rotateX(-Math.PI / 2);
@@ -266,15 +137,15 @@ export default class HolographicInteractions extends Vue {
     if (intersects.length) {
       const { x, z } = intersects[0].point;
 
-      for (let row = 0; row < this.grid.rows; row++) {
-        for (let col = 0; col < this.grid.cols; col++) {
-          const mesh = this.meshes[row][col];
+      for (let row = 0; row < this.geometryGrid.grid.rows; row++) {
+        for (let col = 0; col < this.geometryGrid.grid.cols; col++) {
+          const mesh = this.geometryGrid.meshes[row][col];
 
           const mouseDistance = distance(
             x,
             z,
-            mesh.position.x + this.groupMesh.position.x,
-            mesh.position.z + this.groupMesh.position.z
+            mesh.position.x + this.geometryGrid.groupMesh.position.x,
+            mesh.position.z + this.geometryGrid.groupMesh.position.z
           );
 
           const y = map(mouseDistance, 6, 0, 0, 10);
@@ -292,15 +163,27 @@ export default class HolographicInteractions extends Vue {
 
           TweenMax.to(mesh.rotation, 0.5, {
             ease: Expo.easeOut,
-            x: map(mesh.position.y, -1, 1, radians(45), this.initialRotation.x),
+            x: map(
+              mesh.position.y,
+              -1,
+              1,
+              radians(45),
+              this.geometryGrid.initialRotation.x
+            ),
             z: map(
               mesh.position.y,
               -1,
               1,
               radians(-90),
-              this.initialRotation.z
+              this.geometryGrid.initialRotation.z
             ),
-            y: map(mesh.position.y, -1, 1, radians(90), this.initialRotation.y)
+            y: map(
+              mesh.position.y,
+              -1,
+              1,
+              radians(90),
+              this.geometryGrid.initialRotation.y
+            )
           });
         }
       }
