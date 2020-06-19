@@ -7,7 +7,7 @@ export default class Camera {
       window.innerWidth / window.innerHeight,
       1
     );
-    camera.position.set(0, 30, 0);
+    camera.position.set(0, 30, 30);
 
     return camera;
   }

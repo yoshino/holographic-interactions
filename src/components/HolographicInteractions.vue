@@ -20,20 +20,6 @@ import Renderer from "@/modules/renderer.ts";
 import Camera from "@/modules/camera.ts";
 import Floor from "@/modules/floor.ts";
 
-const distance = (x1: number, y1: number, x2: number, y2: number) => {
-  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-};
-
-const map = (
-  value: number,
-  start1: number,
-  stop1: number,
-  start2: number,
-  stop2: number
-) => {
-  return ((value - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
-};
-
 @Component
 export default class HolographicInteractions extends Vue {
   gui = new dat.GUI();
@@ -43,14 +29,13 @@ export default class HolographicInteractions extends Vue {
   width = window.innerWidth;
   height = window.innerHeight;
   mouse3D = new THREE.Vector2();
-  repulsion = 1;
 
   scene = new THREE.Scene();
   renderer = Renderer.create();
-  camera = Camera.create();
   light = new Light(this.scene, this.gui);
-  controls = new OrbitControls(this.camera, this.renderer.domElement);
   floor = Floor.create(this.scene);
+  camera = Camera.create();
+  controls = new OrbitControls(this.camera, this.renderer.domElement);
 
   geometryGrid = new GeometryGrid({
     scene: this.scene,
@@ -60,13 +45,6 @@ export default class HolographicInteractions extends Vue {
   });
 
   mounted() {
-    this.setup();
-    this.light.setup();
-    this.geometryGrid.setup();
-    this.animate();
-  }
-
-  setup() {
     const gui = this.gui.addFolder("Background");
     gui.addColor(this, "backgroundColor").onChange(color => {
       document.body.style.backgroundColor = color;
@@ -75,12 +53,14 @@ export default class HolographicInteractions extends Vue {
     window.addEventListener("resize", this.onResize.bind(this), {
       passive: true
     });
-
     window.addEventListener("mousemove", this.onMouseMove.bind(this), {
       passive: true
     });
-
     this.onMouseMove({ clientX: 0, clientY: 0 });
+
+    this.light.setup();
+    this.geometryGrid.setup();
+    this.animate();
   }
 
   onMouseMove({ clientX, clientY }: { clientX: number; clientY: number }) {
@@ -97,6 +77,20 @@ export default class HolographicInteractions extends Vue {
     this.renderer.setSize(this.width, this.height);
   }
 
+  distance(x1: number, y1: number, x2: number, y2: number) {
+    return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+  }
+
+  map(
+    value: number,
+    start1: number,
+    stop1: number,
+    start2: number,
+    stop2: number
+  ) {
+    return ((value - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
+  }
+
   draw() {
     this.raycaster.setFromCamera(this.mouse3D, this.camera);
 
@@ -109,14 +103,14 @@ export default class HolographicInteractions extends Vue {
         for (let col = 0; col < this.geometryGrid.grid.cols; col++) {
           const mesh = this.geometryGrid.meshes[row][col];
 
-          const mouseDistance = distance(
+          const mouseDistance = this.distance(
             x,
             z,
             mesh.position.x + this.geometryGrid.groupMesh.position.x,
             mesh.position.z + this.geometryGrid.groupMesh.position.z
           );
 
-          const y = map(mouseDistance, 6, 0, 0, 10);
+          const y = this.map(mouseDistance, 6, 0, 0, 10);
           TweenMax.to(mesh.position, 0.2, { y: y < 1 ? 1 : y });
 
           const scaleFactor = mesh.position.y / 2.5;
@@ -131,21 +125,21 @@ export default class HolographicInteractions extends Vue {
 
           TweenMax.to(mesh.rotation, 0.5, {
             ease: Expo.easeOut,
-            x: map(
+            x: this.map(
               mesh.position.y,
               -1,
               1,
               Utils.radians(45),
               this.geometryGrid.initialRotation.x
             ),
-            z: map(
+            z: this.map(
               mesh.position.y,
               -1,
               1,
               Utils.radians(-90),
               this.geometryGrid.initialRotation.z
             ),
-            y: map(
+            y: this.map(
               mesh.position.y,
               -1,
               1,
